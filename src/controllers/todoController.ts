@@ -1,8 +1,6 @@
 import { Response, Request } from "express";
 import * as TodoService from "../services/todoMongooseService";
 // import { logRequest } from "../services/logger";
-import * as mongoose from "mongoose";
-import Todo from "../models/todoModel";
 
 const createTodo = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -36,11 +34,11 @@ const readTodo = async (req: Request, res: Response): Promise<Response> => {
     // }
 
     const todo = await TodoService.readById(req.params.id);
-    // if (!todo) {
-    //   return res.status(404).json({
-    //     message: "Todo not found",
-    //   });
-    // }
+    if (!todo) {
+      return res.status(404).json({
+        message: "Todo not found",
+      });
+    }
     return res.status(200).json({ todo });
   } catch (err) {
     return res.status(500).json({
@@ -82,11 +80,11 @@ const updateTodo = async (req: Request, res: Response): Promise<Response> => {
       textBody,
       isComplete
     );
-    // if (!updatedTodo) {
-    //   return res.status(404).json({
-    //     message: "Todo not found",
-    //   });
-    // }
+    if (!todo) {
+      return res.status(404).json({
+        message: "Todo not found",
+      });
+    }
     const todos = await TodoService.readAll();
     return res.status(200).json({
       message: "Todo updated",
@@ -109,11 +107,11 @@ const deleteTodo = async (req: Request, res: Response): Promise<Response> => {
     //   });
     // }
     const todo = await TodoService.deleteById(req.params.id);
-    // if (!deletedTodo) {
-    //   return res.status(404).json({
-    //     message: "Todo not found",
-    //   });
-    // }
+    if (!todo) {
+      return res.status(404).json({
+        message: "Todo not found",
+      });
+    }
     const todos = await TodoService.readAll();
     return res.status(200).json({
       message: "Todo deleted",
