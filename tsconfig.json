@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*"],
-  "exclude": ["**/*.spec.ts", "src/tpes/*.ts"],
+  "exclude": ["**/*.spec.ts", "src/types/*.ts"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 

@@ -1,4 +1,4 @@
-import { ITodo } from "../types/todo";
+import ITodo from "../types/ITodo";
 import { model, Schema } from "mongoose";
 
 const todoSchema: Schema = new Schema(
@@ -6,13 +6,16 @@ const todoSchema: Schema = new Schema(
     textBody: {
       type: String,
       required: true,
+      minLength: 1,
+      maxLength: 300,
     },
-    isCompleted: {
+    isComplete: {
       type: Boolean,
       required: true,
     },
   },
   { timestamps: true }
 );
+const Todo = model<ITodo>("Todo", todoSchema);
 
-export default model<ITodo>("Todo", todoSchema);
+export default Todo;
