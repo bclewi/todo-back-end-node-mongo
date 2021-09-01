@@ -25,3 +25,7 @@ Runs the app in the development mode on [http://localhost:4000](http://localhost
 ### `npm run build`
 
 Builds the app for production to the `dist` folder.
+
+### `npm run test` or `npm t`
+
+Builds the app and then runs all test suites ending in `.test.ts` with jest.
