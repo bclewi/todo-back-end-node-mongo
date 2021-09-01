@@ -154,6 +154,17 @@ describe("Todo List App", () => {
     expect(todos).toHaveLength(0);
   });
 
+  it("should respond with 200 on GET requests to fetch all todos if no todos are found", async () => {
+    const res = await request(app).get("/todos");
+    expect(Object.is(res, null)).toBe(false);
+    expect(res).toHaveProperty("statusCode", 200);
+    expect(res).toHaveProperty("body");
+    expect(res.body).toHaveProperty("todos");
+    const { todos } = res.body;
+    expect(todos).toHaveLength(0);
+    expect(todos).toStrictEqual([]);
+  });
+
   it("should respond with 400 when trying to fetch a todo with an invalid id format", async () => {
     const res = await request(app).get("/todos/1");
     expect(Object.is(res, null)).toBe(false);
@@ -236,19 +247,16 @@ describe("Todo List App", () => {
     expect(res.body).toHaveProperty("message");
   });
 
-  it("should respond with 200 on GET requests to fetch all todos if no todos are found", async () => {
-    const res = await request(app).get("/todos");
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 200);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("todos");
-    const { todos } = res.body;
-    expect(todos).toHaveLength(0);
-    expect(todos).toStrictEqual([]);
-  });
-
   it("should respond with 400 on POST requests with no textBody", async () => {
     const res = await request(app).post("/todos");
+    expect(Object.is(res, null)).toBe(false);
+    expect(res).toHaveProperty("statusCode", 400);
+    expect(res).toHaveProperty("body");
+    expect(res.body).toHaveProperty("message");
+  });
+
+  it("should respond with 400 on POST requests with an empty string", async () => {
+    const res = await request(app).post("/todos").send({ textBody: "" });
     expect(Object.is(res, null)).toBe(false);
     expect(res).toHaveProperty("statusCode", 400);
     expect(res).toHaveProperty("body");
