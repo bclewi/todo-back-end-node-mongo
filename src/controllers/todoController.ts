@@ -1,15 +1,22 @@
 import { Response, Request } from "express";
-import * as TodoService from "../services/todoMongooseService";
-// import { logRequest } from "../services/logger";
+import * as TodoService from "../services/todoService";
+import ITodo from "../types/ITodo";
+import * as mongoose from "mongoose";
+
+// TODO - Extract validation logic into middleware
 
 const createTodo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // logRequest(req);
-    const { textBody, isComplete } = req.body;
+    const { textBody } = req.body;
+    if (!textBody) {
+      return res.status(400).json({
+        message: "textBody is required",
+      });
+    }
 
-    const todo = await TodoService.create(textBody, isComplete);
+    const todo = await TodoService.create(textBody);
     const todos = await TodoService.readAll();
-    // let error = todo.validateSync();
+    let error = todo.validateSync();
     // console.log("todo.textBody error: ", error.errors["textBody"].message);
     // console.log("todo.isComplete error: ", error.errors["isComplete"].message);
     return res.status(201).json({
@@ -18,6 +25,11 @@ const createTodo = async (req: Request, res: Response): Promise<Response> => {
       todos,
     });
   } catch (err) {
+    if (err.message === "Todo.textBody cannot be an empty string") {
+      return res.status(400).json({
+        message: err.message,
+      });
+    }
     return res.status(500).json({
       message: err.message,
     });
@@ -26,13 +38,6 @@ const createTodo = async (req: Request, res: Response): Promise<Response> => {
 
 const readTodo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // logRequest(req);
-    // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    //   return res.status(400).json({
-    //     message: "Bad request",
-    //   });
-    // }
-
     const todo = await TodoService.readById(req.params.id);
     if (!todo) {
       return res.status(404).json({
@@ -49,7 +54,6 @@ const readTodo = async (req: Request, res: Response): Promise<Response> => {
 
 const readTodos = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // logRequest(req);
     const todos = await TodoService.readAll();
     return res.status(200).json({ todos });
   } catch (err) {
@@ -61,31 +65,36 @@ const readTodos = async (req: Request, res: Response): Promise<Response> => {
 
 const updateTodo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // logRequest(req);
-    const { textBody, isComplete } = req.body;
-    // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    //   console.log("_id is an invalid ObjectId");
-    //   return res.status(400).json({
-    //     message: "Bad request",
-    //   });
-    // } else if (!textBody && !isComplete) {
-    //   console.log("textBody or isComplete required to update resource");
-    //   return res.status(400).json({
-    //     message: "Bad request",
-    //   });
-    // }
+    const { id } = req.params;
+    const { textBody } = req.body;
+    let todo: ITodo = null;
 
-    const todo = await TodoService.updateById(
-      req.params.id,
-      textBody,
-      isComplete
-    );
+    // validation
+    if (!id) {
+      return res.status(400).json({
+        message: "id param is required to update a Todo",
+      });
+    } else if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "invalid id param",
+      });
+    }
+
+    if (!textBody) {
+      todo = await TodoService.updateCompleteById(id);
+    } else {
+      todo = await TodoService.updateTextById(id, textBody);
+    }
+
+    const todos = await TodoService.readAll();
+
     if (!todo) {
       return res.status(404).json({
         message: "Todo not found",
+        todos,
       });
     }
-    const todos = await TodoService.readAll();
+
     return res.status(200).json({
       message: "Todo updated",
       todo,
@@ -100,7 +109,6 @@ const updateTodo = async (req: Request, res: Response): Promise<Response> => {
 
 const deleteTodo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // logRequest(req);
     // if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     //   return res.status(400).json({
     //     message: "Bad request",

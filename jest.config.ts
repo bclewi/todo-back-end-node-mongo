@@ -21,5 +21,6 @@ const config: InitialOptionsTsJest = {
   },
   testEnvironment: "node",
   testMatch: ["**/*.test.ts"],
+  verbose: true,
 };
 export default config;
