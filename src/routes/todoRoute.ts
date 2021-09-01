@@ -8,6 +8,8 @@ import {
 } from "../controllers/todoController";
 // import { body } from "express-validator";
 
+// TODO - implement validation middleware
+
 const router: Router = Router();
 
 router

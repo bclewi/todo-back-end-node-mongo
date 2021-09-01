@@ -3,7 +3,6 @@ import ITodo from "../types/ITodo";
 import * as mongoose from "mongoose";
 
 const create = async (textBody: string): Promise<ITodo> => {
-  // validation
   if (textBody === "") {
     throw new Error("Todo.textBody cannot be an empty string");
   } else if (textBody.length > 255) {
@@ -14,6 +13,10 @@ const create = async (textBody: string): Promise<ITodo> => {
 };
 
 const readById = async (id: string): Promise<ITodo | null> => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Todo.id must be a valid mongoose ObjectId");
+  }
+
   return await Todo.findById(id);
 };
 
@@ -22,7 +25,12 @@ const readAll = async (): Promise<ITodo[]> => {
 };
 
 const updateCompleteById = async (id: string): Promise<ITodo | null> => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Todo.id must be a valid mongoose ObjectId");
+  }
+
   const originalTodo = await Todo.findById(id);
+  if (!originalTodo) return null;
   return await Todo.findByIdAndUpdate(
     id,
     { isComplete: !originalTodo.isComplete }, // update
@@ -41,6 +49,7 @@ const updateTextById = async (
   if (textBody === "") {
     throw new Error("Todo.textBody cannot be an empty string");
   }
+
   return await Todo.findByIdAndUpdate(
     id,
     { textBody }, // update
@@ -50,6 +59,10 @@ const updateTextById = async (
 };
 
 const deleteById = async (id: string): Promise<ITodo | null> => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new Error("Todo.id must be a valid mongoose ObjectId");
+  }
+
   return await Todo.findByIdAndDelete(id);
 };
 

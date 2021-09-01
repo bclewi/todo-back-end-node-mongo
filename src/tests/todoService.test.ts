@@ -84,7 +84,7 @@ describe("Todo service", () => {
     expect(Object.is(updatedTodo, null)).toBe(false);
     expect(updatedTodo).toHaveProperty("_id", originalTodo._id);
     expect(updatedTodo).toHaveProperty("textBody", originalTodo.textBody);
-    expect(updatedTodo).toHaveProperty("isComplete", true);
+    expect(updatedTodo).toHaveProperty("isComplete", !originalTodo.isComplete);
     expect(updatedTodo).toHaveProperty("createdAt", originalTodo.createdAt);
     expect(updatedTodo).toHaveProperty("updatedAt");
     expect(updatedTodo.updatedAt).not.toBe(originalTodo.updatedAt);
@@ -101,7 +101,7 @@ describe("Todo service", () => {
     expect(deletedTodo).toHaveProperty("textBody", originalTodo.textBody);
     expect(deletedTodo).toHaveProperty("isComplete", originalTodo.isComplete);
     expect(deletedTodo).toHaveProperty("createdAt", originalTodo.createdAt);
-    expect(deletedTodo).toHaveProperty("updatedAt", originalTodo.createdAt);
+    expect(deletedTodo).toHaveProperty("updatedAt", originalTodo.updatedAt);
 
     const allTodos = await TodoService.readAll();
     expect(allTodos).toHaveLength(0);
@@ -146,13 +146,20 @@ describe("Todo service", () => {
     expect(Object.is(actual, null)).toBe(true);
   });
 
-  it("should return null when updating a todo and no todo is found", async () => {
+  it("should return null when updating the text of a todo and no todo is found", async () => {
     const expected = await TodoService.create(testData.textBody);
     await TodoService.deleteById(expected._id);
     const actual = await TodoService.updateTextById(
       expected._id,
       updateData.textBody
     );
+    expect(Object.is(actual, null)).toBe(true);
+  });
+
+  it("should return null when updating the completion status of a todo and no todo is found", async () => {
+    const expected = await TodoService.create(testData.textBody);
+    await TodoService.deleteById(expected._id);
+    const actual = await TodoService.updateCompleteById(expected._id);
     expect(Object.is(actual, null)).toBe(true);
   });
 
