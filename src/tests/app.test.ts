@@ -24,6 +24,9 @@ describe("Todo List App", () => {
     textBody: "update",
   };
 
+  const longTextBody =
+    "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111";
+
   it("should create a todo", async () => {
     const res = await request(app).post("/todos").send(testData);
     expect(Object.is(res, null)).toBe(false);
@@ -165,48 +168,13 @@ describe("Todo List App", () => {
     expect(todos).toStrictEqual([]);
   });
 
-  it("should respond with 400 when trying to fetch a todo with an invalid id format", async () => {
-    const res = await request(app).get("/todos/1");
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
-  });
-
-  it("should respond with 400 when trying to update the text of a todo with an invalid id format", async () => {
-    const res = await request(app).put("/todos/1").send(updateData);
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
-  });
-
-  it("should respond with 400 when trying to update the completion status of a todo with an invalid id format", async () => {
-    const res = await request(app).put("/todos/1");
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
-  });
-
-  it("should respond with 400 when trying to delete a todo with an invalid id format", async () => {
-    const res = await request(app).delete("/todos/1");
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
-  });
-
   it("should respond with 404 on GET requests if no todo is found", async () => {
     const postRes = await request(app).post("/todos").send(testData);
     const originalTodo = postRes.body.todo;
     await request(app).delete(`/todos/${originalTodo._id}`);
 
     const res = await request(app).get(`/todos/${originalTodo._id}`);
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 404);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 404);
   });
 
   it("should respond with 404 on PUT requests to update the text of a todo if no todo is found", async () => {
@@ -217,10 +185,7 @@ describe("Todo List App", () => {
     const res = await request(app)
       .put(`/todos/${originalTodo._id}`)
       .send(updateData);
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 404);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 404);
   });
 
   it("should respond with 404 on PUT requests to update the completion status of a todo if no todo is found", async () => {
@@ -229,10 +194,7 @@ describe("Todo List App", () => {
     await request(app).delete(`/todos/${originalTodo._id}`);
 
     const res = await request(app).put(`/todos/${originalTodo._id}`);
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 404);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 404);
   });
 
   it("should respond with 404 on DELETE requests if no todo is found", async () => {
@@ -241,26 +203,37 @@ describe("Todo List App", () => {
     await request(app).delete(`/todos/${originalTodo._id}`);
 
     const res = await request(app).delete(`/todos/${originalTodo._id}`);
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 404);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 404);
+  });
+
+  it("should respond with 400 on GET requests with an invalid id format", async () => {
+    const res = await request(app).get("/todos/1");
+    _expectMessageAndResponseCode(res, 400);
+  });
+
+  it("should respond with 400 on PUT requests to update the text of a todo with an invalid id format", async () => {
+    const res = await request(app).put("/todos/1").send(updateData);
+    _expectMessageAndResponseCode(res, 400);
+  });
+
+  it("should respond with 400 on PUT requests to update the completion status of a todo with an invalid id format", async () => {
+    const res = await request(app).put("/todos/1");
+    _expectMessageAndResponseCode(res, 400);
+  });
+
+  it("should respond with 400 on DELETE requests with an invalid id format", async () => {
+    const res = await request(app).delete("/todos/1");
+    _expectMessageAndResponseCode(res, 400);
   });
 
   it("should respond with 400 on POST requests with no textBody", async () => {
     const res = await request(app).post("/todos");
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 400);
   });
 
   it("should respond with 400 on POST requests with an empty string", async () => {
     const res = await request(app).post("/todos").send({ textBody: "" });
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 400);
   });
 
   it("should respond with 400 on PUT requests to update the text of a todo with an empty string", async () => {
@@ -270,21 +243,14 @@ describe("Todo List App", () => {
     const res = await request(app)
       .put(`/todos/${originalTodo._id}`)
       .send({ textBody: "" });
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 400);
   });
 
   it("should respond with 400 on POST requests with a textBody over 255 characters long", async () => {
     const res = await request(app).post("/todos").send({
-      textBody:
-        "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111",
+      textBody: longTextBody,
     });
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 400);
   });
 
   it("should respond with 400 on PUT requests with a textBody over 255 characters long", async () => {
@@ -292,12 +258,18 @@ describe("Todo List App", () => {
     const originalTodo = postRes.body.todo;
 
     const res = await request(app).put(`/todos/${originalTodo._id}`).send({
-      textBody:
-        "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111",
+      textBody: longTextBody,
     });
-    expect(Object.is(res, null)).toBe(false);
-    expect(res).toHaveProperty("statusCode", 400);
-    expect(res).toHaveProperty("body");
-    expect(res.body).toHaveProperty("message");
+    _expectMessageAndResponseCode(res, 400);
   });
 });
+
+const _expectMessageAndResponseCode = (
+  res: request.Response,
+  statusCode: number
+): void => {
+  expect(Object.is(res, null)).toBe(false);
+  expect(res).toHaveProperty("statusCode", statusCode);
+  expect(res).toHaveProperty("body");
+  expect(res.body).toHaveProperty("message");
+};

@@ -107,38 +107,6 @@ describe("Todo service", () => {
     expect(allTodos).toHaveLength(0);
   });
 
-  it("should throw an error when trying to fetch a todo with an invalid id format", async () => {
-    try {
-      await TodoService.readById("1");
-    } catch (err) {
-      expect(err).toHaveProperty("message");
-    }
-  });
-
-  it("should throw an error when trying to update the text of a todo with an invalid id format", async () => {
-    try {
-      await TodoService.updateTextById("1", updateData.textBody);
-    } catch (err) {
-      expect(err).toHaveProperty("message");
-    }
-  });
-
-  it("should throw an error when trying to update the completion status of a todo with an invalid id format", async () => {
-    try {
-      await TodoService.updateCompleteById("1");
-    } catch (err) {
-      expect(err).toHaveProperty("message");
-    }
-  });
-
-  it("should throw an error when trying to delete a todo with an invalid id format", async () => {
-    try {
-      await TodoService.deleteById("1");
-    } catch (err) {
-      expect(err).toHaveProperty("message");
-    }
-  });
-
   it("should return null when fetching a todo and no todo is found", async () => {
     const expected = await TodoService.create(testData.textBody);
     await TodoService.deleteById(expected._id);
@@ -170,11 +138,43 @@ describe("Todo service", () => {
     expect(Object.is(actual, null)).toBe(true);
   });
 
-  it("should return an empty array when trying to fetch all todos and no todos are found", async () => {
+  it("should return an empty array when fetching all todos and no todos are found", async () => {
     const allTodos = await TodoService.readAll();
     expect(Object.is(allTodos, null)).toBe(false);
     expect(allTodos).toHaveLength(0);
     expect(allTodos).toStrictEqual([]);
+  });
+
+  it("should throw an error when fetching a todo with an invalid id format", async () => {
+    try {
+      await TodoService.readById("1");
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
+  it("should throw an error when updating the text of a todo with an invalid id format", async () => {
+    try {
+      await TodoService.updateTextById("1", updateData.textBody);
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
+  it("should throw an error when updating the completion status of a todo with an invalid id format", async () => {
+    try {
+      await TodoService.updateCompleteById("1");
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
+  it("should throw an error when deleting a todo with an invalid id format", async () => {
+    try {
+      await TodoService.deleteById("1");
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
   });
 
   it("should throw an error when creating a todo with an empty string", async () => {
