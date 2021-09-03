@@ -4,14 +4,16 @@ A todo app REST API to perform basic CRUD operations on a MongoDB document datab
 
 ## Environment Configuration
 
-Include a `.env` environment config file in the project root directory with the contents below, replacing the values with your actual mongodb settings.
+Include a `.env` environment config file in the project root directory with the contents below, replacing the values with your actual mongodb settings. `MONGO_PROD_DB` and `MONGO_TEST_DB` are placeholders for configuring multiple databases and are currently not implemented.
 
 ```
 PORT=#####
 MONGO_USER=username
 MONGO_PASSWORD=password
 MONGO_CLUSTER=cluster#.#####.mongodb.net
-MONGO_DB=mongodb
+MONGO_DEV_DB=mongoDevDb
+MONGO_PROD_DB=notImplemented
+MONGO_TEST_DB=notImplemented
 ```
 
 ## Available Scripts
