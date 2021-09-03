@@ -21,7 +21,6 @@ router
 
 router
   .route("/todos/:id")
-
   .get(validator.validate(getValidations), controller.readTodo)
   .put(validator.validate(putValidations), controller.updateTodo)
   .delete(validator.validate(deleteValidations), controller.deleteTodo)

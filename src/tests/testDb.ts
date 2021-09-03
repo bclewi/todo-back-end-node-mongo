@@ -1,6 +1,6 @@
 import "dotenv/config";
 import * as mongoose from "mongoose";
-import mongoTestConfig from "../config/mongoTestConfig";
+import mongoConfig from "../config/mongoConfig";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 const odm = mongoose.connection;
@@ -9,7 +9,7 @@ let mongo: MongoMemoryServer;
 const connect = async () => {
   mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri();
-  const { options } = mongoTestConfig;
+  const { options } = mongoConfig;
   await mongoose.connect(uri, options);
 };
 
