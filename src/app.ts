@@ -9,7 +9,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
-app.use(morgan("dev"));
+
+switch (process.env.NODE_ENV) {
+  case "test":
+    // no logger during jest testing
+    break;
+  case "development":
+    app.use(morgan("dev"));
+    break;
+  case "production":
+    app.use(morgan("common"));
+    break;
+  default:
+    break;
+}
+
 app.use(todoRoutes);
 
 export default app;

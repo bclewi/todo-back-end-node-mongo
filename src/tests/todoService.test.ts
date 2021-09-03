@@ -1,4 +1,5 @@
 import * as TodoService from "../services/todoService";
+import ITodo from "../types/ITodo";
 import * as db from "./testDb";
 
 describe("Todo service", () => {
@@ -22,6 +23,9 @@ describe("Todo service", () => {
     textBody: "update",
   };
 
+  const longTextBody =
+    "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111";
+
   it("should create a todo", async () => {
     const todo = await TodoService.create(testData.textBody);
     expect(Object.is(todo, null)).toBe(false);
@@ -38,26 +42,34 @@ describe("Todo service", () => {
   it("should fetch a todo", async () => {
     const expected = await TodoService.create(testData.textBody);
     const actual = await TodoService.readById(expected._id);
-    expect(actual).toHaveProperty("_id", expected._id);
-    expect(actual).toHaveProperty("textBody", expected.textBody);
-    expect(actual).toHaveProperty("isComplete", expected.isComplete);
-    expect(actual).toHaveProperty("createdAt", expected.createdAt);
-    expect(actual).toHaveProperty("updatedAt", expected.updatedAt);
+    expectToHaveSameProperties(actual, expected);
   });
 
   it("should fetch all todos", async () => {
-    const testDataA = { textBody: "testA" };
-    const testDataB = { textBody: "testB" };
-    const testDataC = { textBody: "testC" };
-    const todoA = await TodoService.create(testDataA.textBody);
-    const todoB = await TodoService.create(testDataB.textBody);
-    const todoC = await TodoService.create(testDataC.textBody);
+    const TODOS_COUNT = 3;
+    const testData = [
+      { textBody: "testA" },
+      { textBody: "testB" },
+      { textBody: "testC" },
+    ];
 
+    let expected = [];
+    for (let i = 0; i < TODOS_COUNT; i++) {
+      expected[i] = await TodoService.create(testData[i].textBody);
+    }
+
+    const actual = await TodoService.readAll();
+    expect(actual).toHaveLength(TODOS_COUNT);
+    for (let i = 0; i < TODOS_COUNT; i++) {
+      expect(actual[i].toJSON).toEqual(expected[i].toJSON);
+    }
+  });
+
+  it("should fetch all todos as an empty array if no todos are found", async () => {
     const allTodos = await TodoService.readAll();
-    expect(allTodos).toHaveLength(3);
-    expect(allTodos[0].toJSON).toEqual(todoA.toJSON);
-    expect(allTodos[1].toJSON).toEqual(todoB.toJSON);
-    expect(allTodos[2].toJSON).toEqual(todoC.toJSON);
+    expect(Object.is(allTodos, null)).toBe(false);
+    expect(allTodos).toHaveLength(0);
+    expect(allTodos).toStrictEqual([]);
   });
 
   it("should update the text of a todo", async () => {
@@ -97,11 +109,7 @@ describe("Todo service", () => {
     const originalTodo = await TodoService.create(testData.textBody);
     const deletedTodo = await TodoService.deleteById(originalTodo._id);
     expect(Object.is(deletedTodo, null)).toBe(false);
-    expect(deletedTodo).toHaveProperty("_id", originalTodo._id);
-    expect(deletedTodo).toHaveProperty("textBody", originalTodo.textBody);
-    expect(deletedTodo).toHaveProperty("isComplete", originalTodo.isComplete);
-    expect(deletedTodo).toHaveProperty("createdAt", originalTodo.createdAt);
-    expect(deletedTodo).toHaveProperty("updatedAt", originalTodo.updatedAt);
+    expectToHaveSameProperties(deletedTodo, originalTodo);
 
     const allTodos = await TodoService.readAll();
     expect(allTodos).toHaveLength(0);
@@ -138,11 +146,20 @@ describe("Todo service", () => {
     expect(Object.is(actual, null)).toBe(true);
   });
 
-  it("should return an empty array when fetching all todos and no todos are found", async () => {
-    const allTodos = await TodoService.readAll();
-    expect(Object.is(allTodos, null)).toBe(false);
-    expect(allTodos).toHaveLength(0);
-    expect(allTodos).toStrictEqual([]);
+  it("should throw an error when creating a todo with an empty string", async () => {
+    try {
+      await TodoService.create("");
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
+  it("should throw an error when creating a todo with a string over 255 characters long", async () => {
+    try {
+      await TodoService.create(longTextBody);
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
   });
 
   it("should throw an error when fetching a todo with an invalid id format", async () => {
@@ -169,6 +186,24 @@ describe("Todo service", () => {
     }
   });
 
+  it("should throw an error when updating a todo with an empty string", async () => {
+    try {
+      const originalTodo = await TodoService.create(testData.textBody);
+      await TodoService.updateTextById(originalTodo._id, "");
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
+  it("should throw an error when updating a todo with a string over 255 characters long", async () => {
+    try {
+      const originalTodo = await TodoService.create(testData.textBody);
+      await TodoService.updateTextById(originalTodo._id, longTextBody);
+    } catch (err) {
+      expect(err).toHaveProperty("message");
+    }
+  });
+
   it("should throw an error when deleting a todo with an invalid id format", async () => {
     try {
       await TodoService.deleteById("1");
@@ -176,55 +211,12 @@ describe("Todo service", () => {
       expect(err).toHaveProperty("message");
     }
   });
-
-  it("should throw an error when creating a todo with an empty string", async () => {
-    try {
-      await TodoService.create("");
-    } catch (err) {
-      expect(err).toHaveProperty(
-        "message",
-        "Todo.textBody cannot be an empty string"
-      );
-    }
-  });
-
-  it("should throw an error when updating a todo with an empty string", async () => {
-    try {
-      const originalTodo = await TodoService.create(testData.textBody);
-      await TodoService.updateTextById(originalTodo._id, "");
-    } catch (err) {
-      expect(err).toHaveProperty(
-        "message",
-        "Todo.textBody cannot be an empty string"
-      );
-    }
-  });
-
-  it("should throw an error when creating a todo with a string over 255 characters long", async () => {
-    try {
-      await TodoService.create(
-        "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111"
-      );
-    } catch (err) {
-      expect(err).toHaveProperty(
-        "message",
-        "Todo.textBody cannot be over 255 characters long"
-      );
-    }
-  });
-
-  it("should throw an error when updating a todo with a string over 255 characters long", async () => {
-    try {
-      const originalTodo = await TodoService.create(testData.textBody);
-      await TodoService.updateTextById(
-        originalTodo._id,
-        "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111"
-      );
-    } catch (err) {
-      expect(err).toHaveProperty(
-        "message",
-        "Todo.textBody cannot be over 255 characters long"
-      );
-    }
-  });
 });
+
+const expectToHaveSameProperties = (actual: ITodo, expected: ITodo) => {
+  expect(actual).toHaveProperty("_id", expected._id);
+  expect(actual).toHaveProperty("textBody", expected.textBody);
+  expect(actual).toHaveProperty("isComplete", expected.isComplete);
+  expect(actual).toHaveProperty("createdAt", expected.createdAt);
+  expect(actual).toHaveProperty("updatedAt", expected.updatedAt);
+};

@@ -1,34 +1,32 @@
 import { Router } from "express";
+import * as controller from "../controllers/todoController";
+import * as validator from "../middleware/validator";
 import {
-  createTodo,
-  readTodo,
-  readTodos,
-  updateTodo,
-  deleteTodo,
-} from "../controllers/todoController";
-// import { body } from "express-validator";
-
-// TODO - implement validation middleware
+  getValidations,
+  postValidations,
+  putValidations,
+  deleteValidations,
+} from "../middleware/todoRouteValidations";
 
 const router: Router = Router();
 
 router
   .route("/todos")
-  .post(
-    // body("textBody").trim().escape(),
-    // body("isComplete").toBoolean(),
-    createTodo
-  )
-  .get(readTodos);
+  .post(validator.validate(postValidations), controller.createTodo)
+  .get(controller.readTodos)
+
+  // Not implemented - let validator respond with 400
+  .put(validator.validate(putValidations))
+  .delete(validator.validate(deleteValidations));
 
 router
   .route("/todos/:id")
-  .get(readTodo)
-  .put(
-    // body("textBody").trim().escape(),
-    // body("isComplete").toBoolean(),
-    updateTodo
-  )
-  .delete(deleteTodo);
+
+  .get(validator.validate(getValidations), controller.readTodo)
+  .put(validator.validate(putValidations), controller.updateTodo)
+  .delete(validator.validate(deleteValidations), controller.deleteTodo)
+
+  // Not implemented - let validator respond with 400
+  .post(validator.validate(postValidations));
 
 export default router;
