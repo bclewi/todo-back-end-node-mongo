@@ -228,12 +228,13 @@ describe("Todo List App", () => {
     expectStatusCode(res, 400);
   });
 
-  it("should 400 PUT requests with no id", async () => {
+  it("should 404 PUT requests with no id", async () => {
     const postRes = await request(app).post("/todos").send(testData);
     const originalTodo = postRes.body.todo;
 
     const res = await request(app).put("/todos");
-    expectStatusCode(res, 400);
+    expect(Object.is(res, null)).toBe(false);
+    expect(res).toHaveProperty("statusCode", 404);
   });
 
   it("should 400 PUT requests to update the text of a todo with an invalid id format", async () => {
@@ -266,12 +267,13 @@ describe("Todo List App", () => {
     expectStatusCode(res, 400);
   });
 
-  it("should 400 DELETE requests with no id", async () => {
+  it("should 404 DELETE requests with no id", async () => {
     const postRes = await request(app).post("/todos").send(testData);
     const originalTodo = postRes.body.todo;
 
     const res = await request(app).delete("/todos");
-    expectStatusCode(res, 400);
+    expect(Object.is(res, null)).toBe(false);
+    expect(res).toHaveProperty("statusCode", 404);
   });
 
   it("should 400 DELETE requests with an invalid id format", async () => {
