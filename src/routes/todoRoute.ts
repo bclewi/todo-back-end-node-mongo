@@ -13,19 +13,12 @@ const router: Router = Router();
 router
   .route("/todos")
   .post(validator.validate(postValidations), controller.createTodo)
-  .get(controller.readTodos)
-
-  // Not implemented - let validator respond with 400
-  .put(validator.validate(putValidations))
-  .delete(validator.validate(deleteValidations));
+  .get(controller.readTodos);
 
 router
   .route("/todos/:id")
   .get(validator.validate(getValidations), controller.readTodo)
   .put(validator.validate(putValidations), controller.updateTodo)
-  .delete(validator.validate(deleteValidations), controller.deleteTodo)
-
-  // Not implemented - let validator respond with 400
-  .post(validator.validate(postValidations));
+  .delete(validator.validate(deleteValidations), controller.deleteTodo);
 
 export default router;
