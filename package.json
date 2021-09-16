@@ -6,7 +6,7 @@
   "scripts": {
     "build": "ts-node dist/server.js",
     "start": "concurrently \"tsc --watch\" \"nodemon dist/server.js\"",
-    "test": "npm run build && jest --detectOpenHandles"
+    "test": "tsc && jest --detectOpenHandles"
   },
   "keywords": [],
   "author": "Brandon Lewis",
