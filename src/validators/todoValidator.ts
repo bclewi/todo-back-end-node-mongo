@@ -1,7 +1,7 @@
-import * as mongoose from "mongoose";
+import { Types } from "mongoose";
 
 const isValidId = (id: string): boolean => {
-  return mongoose.Types.ObjectId.isValid(id);
+  return Types.ObjectId.isValid(id);
 };
 
 const isValidTextBody = (textBody: string): boolean => {

@@ -1,5 +1,5 @@
 import * as todoService from "../services/todoService";
-import ITodo from "../types/ITodo";
+import { ITodo } from "../types";
 import {
   CreateResponse,
   ReadResponse,
