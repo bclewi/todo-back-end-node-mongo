@@ -1,8 +1,7 @@
 import * as express from "express";
 import * as cors from "cors";
 import * as morgan from "morgan";
-import corsConfig from "./config/corsConfig";
-import * as loggerConfig from "./config/loggerConfig";
+import { corsConfig, loggerConfig } from "./config";
 import todoRoutes from "./routes/todoRoute";
 
 const app = express();

@@ -1,6 +1,6 @@
 import { ConnectOptions } from "mongoose";
 
-export default interface IMongoConfig {
+export default interface MongoConfig {
   uri: string;
   options: ConnectOptions;
 }

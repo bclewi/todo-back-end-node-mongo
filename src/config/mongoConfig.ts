@@ -1,9 +1,8 @@
 import "dotenv/config";
 import * as mongoose from "mongoose";
-import { IMongoConfig } from "../types";
+import { MongoConfig } from "../types";
 
-const { MONGO_USER, MONGO_PASSWORD, MONGO_CLUSTER } = process.env;
-let mongoDb: string = "";
+const { MONGO_USER, MONGO_PASSWORD, MONGO_CLUSTER, MONGO_DB } = process.env;
 let options: mongoose.ConnectOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -12,15 +11,9 @@ let options: mongoose.ConnectOptions = {
 };
 mongoose.set("useFindAndModify", false);
 
-if (process.env.NODE_ENV === "development") {
-  mongoDb = process.env.MONGO_DEV_DB;
-} else if (process.env.NODE_ENV === "production") {
-  throw new Error("mongoose is not configured for production");
-}
+const uri: string = `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER}/${MONGO_DB}?retryWrites=true&w=majority`;
 
-const uri: string = `mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER}/${mongoDb}?retryWrites=true&w=majority`;
-
-const mongoConfig: IMongoConfig = {
+const mongoConfig: MongoConfig = {
   uri,
   options,
 };

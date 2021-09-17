@@ -1,4 +1,4 @@
-import IMongoConfig from "./IMongoConfig";
+import MongoConfig from "./MongoConfig";
 import ITodo from "./ITodo";
 import {
   CreateResponse,
@@ -9,7 +9,7 @@ import {
 } from "./TodoControllerResponse";
 
 export {
-  IMongoConfig,
+  MongoConfig,
   ITodo,
   CreateResponse,
   ReadResponse,
