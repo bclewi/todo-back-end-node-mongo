@@ -1,12 +1,12 @@
 import * as todoService from "../services/todoService";
-import { ITodo } from "../types";
 import {
+  ITodo,
   CreateResponse,
   ReadResponse,
   ReadAllResponse,
   UpdateResponse,
   DeleteResponse,
-} from "../types/TodoControllerResponse";
+} from "../types";
 
 const createTodo = async (textBody: string): Promise<CreateResponse> => {
   const todo = await todoService.create(textBody);

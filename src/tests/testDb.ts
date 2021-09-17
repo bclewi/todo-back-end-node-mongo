@@ -1,6 +1,6 @@
 import "dotenv/config";
 import * as mongoose from "mongoose";
-import mongoConfig from "../config/mongoConfig";
+import { mongoConfig } from "../config";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 const odm = mongoose.connection;

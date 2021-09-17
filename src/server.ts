@@ -1,7 +1,7 @@
 import "dotenv/config";
 import app from "./app";
 import * as mongoose from "mongoose";
-import mongoConfig from "./config/mongoConfig";
+import { mongoConfig } from "./config";
 
 const PORT: string | number = process.env.PORT || 4000;
 const db: mongoose.Connection = mongoose.connection;
