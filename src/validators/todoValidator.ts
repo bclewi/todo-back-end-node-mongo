@@ -1,7 +1,7 @@
 import * as mongoose from "mongoose";
 
 const isValidId = (id: string): boolean => {
-  return !mongoose.Types.ObjectId.isValid(id);
+  return mongoose.Types.ObjectId.isValid(id);
 };
 
 const isValidTextBody = (textBody: string): boolean => {
@@ -9,13 +9,13 @@ const isValidTextBody = (textBody: string): boolean => {
 };
 
 const validateId = (id: string) => {
-  if (isValidId(id)) {
+  if (!isValidId(id)) {
     throw new Error("Todo.id must be a valid mongoose ObjectId");
   }
 };
 
 const validateTextBody = (textBody: string) => {
-  if (isValidTextBody(textBody)) {
+  if (!isValidTextBody(textBody)) {
     throw new Error(
       "Todo.textBody must be a non-empty string of at most 255 characters"
     );
