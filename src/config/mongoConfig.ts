@@ -1,6 +1,6 @@
 import "dotenv/config";
 import * as mongoose from "mongoose";
-import IMongoConfig from "../types/IMongoConfig";
+import { IMongoConfig } from "../types";
 
 const { MONGO_USER, MONGO_PASSWORD, MONGO_CLUSTER } = process.env;
 let mongoDb: string = "";

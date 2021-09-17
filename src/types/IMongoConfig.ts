@@ -1,6 +1,6 @@
-import * as mongoose from "mongoose";
+import { ConnectOptions } from "mongoose";
 
 export default interface IMongoConfig {
   uri: string;
-  options: mongoose.ConnectOptions;
+  options: ConnectOptions;
 }

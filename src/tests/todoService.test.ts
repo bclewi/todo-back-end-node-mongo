@@ -1,5 +1,5 @@
 import * as TodoService from "../services/todoService";
-import ITodo from "../types/ITodo";
+import { ITodo } from "../types";
 import * as db from "./testDb";
 
 describe("Todo service", () => {

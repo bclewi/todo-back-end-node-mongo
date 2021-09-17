@@ -1,7 +1,7 @@
 import app from "../app";
 import * as db from "./testDb";
 import * as request from "supertest";
-import ITodo from "../types/ITodo";
+import { ITodo } from "../types";
 
 describe("Todo List App", () => {
   beforeAll(async () => {
