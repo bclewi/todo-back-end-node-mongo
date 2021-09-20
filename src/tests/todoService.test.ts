@@ -27,7 +27,7 @@ describe("Todo service", () => {
     "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111";
 
   it("should create a todo", async () => {
-    const todo = await TodoService.create(testData.textBody);
+    const todo = await TodoService.create({ textBody: testData.textBody });
     expect(Object.is(todo, null)).toBe(false);
     expect(todo).toHaveProperty("_id");
     expect(todo).toHaveProperty("textBody", testData.textBody);
@@ -40,8 +40,8 @@ describe("Todo service", () => {
   });
 
   it("should fetch a todo", async () => {
-    const expected = await TodoService.create(testData.textBody);
-    const actual = await TodoService.readById(expected._id);
+    const expected = await TodoService.create({ textBody: testData.textBody });
+    const actual = await TodoService.readById({ id: expected._id });
     expectToHaveSameProperties(actual, expected);
   });
 
@@ -55,7 +55,9 @@ describe("Todo service", () => {
 
     let expected = [];
     for (let i = 0; i < TODOS_COUNT; i++) {
-      expected[i] = await TodoService.create(testData[i].textBody);
+      expected[i] = await TodoService.create({
+        textBody: testData[i].textBody,
+      });
     }
 
     const actual = await TodoService.readAll();
@@ -73,11 +75,13 @@ describe("Todo service", () => {
   });
 
   it("should update the text of a todo", async () => {
-    const originalTodo = await TodoService.create(testData.textBody);
-    const updatedTodo = await TodoService.updateTextById(
-      originalTodo._id,
-      updateData.textBody
-    );
+    const originalTodo = await TodoService.create({
+      textBody: testData.textBody,
+    });
+    const updatedTodo = await TodoService.updateTextById({
+      id: originalTodo._id,
+      textBody: updateData.textBody,
+    });
     expect(Object.is(updatedTodo, null)).toBe(false);
     expect(updatedTodo).toHaveProperty("_id", originalTodo._id);
     expect(updatedTodo).toHaveProperty("textBody", updateData.textBody);
@@ -91,8 +95,12 @@ describe("Todo service", () => {
   });
 
   it("should update the completion status of a todo", async () => {
-    const originalTodo = await TodoService.create(testData.textBody);
-    const updatedTodo = await TodoService.updateCompleteById(originalTodo._id);
+    const originalTodo = await TodoService.create({
+      textBody: testData.textBody,
+    });
+    const updatedTodo = await TodoService.updateCompleteById({
+      id: originalTodo._id,
+    });
     expect(Object.is(updatedTodo, null)).toBe(false);
     expect(updatedTodo).toHaveProperty("_id", originalTodo._id);
     expect(updatedTodo).toHaveProperty("textBody", originalTodo.textBody);
@@ -106,8 +114,10 @@ describe("Todo service", () => {
   });
 
   it("should delete a todo", async () => {
-    const originalTodo = await TodoService.create(testData.textBody);
-    const deletedTodo = await TodoService.deleteById(originalTodo._id);
+    const originalTodo = await TodoService.create({
+      textBody: testData.textBody,
+    });
+    const deletedTodo = await TodoService.deleteById({ id: originalTodo._id });
     expect(Object.is(deletedTodo, null)).toBe(false);
     expectToHaveSameProperties(deletedTodo, originalTodo);
 
@@ -116,39 +126,39 @@ describe("Todo service", () => {
   });
 
   it("should return null when fetching a todo and no todo is found", async () => {
-    const expected = await TodoService.create(testData.textBody);
-    await TodoService.deleteById(expected._id);
-    const actual = await TodoService.readById(expected._id);
+    const expected = await TodoService.create({ textBody: testData.textBody });
+    await TodoService.deleteById({ id: expected._id });
+    const actual = await TodoService.readById({ id: expected._id });
     expect(Object.is(actual, null)).toBe(true);
   });
 
   it("should return null when updating the text of a todo and no todo is found", async () => {
-    const expected = await TodoService.create(testData.textBody);
-    await TodoService.deleteById(expected._id);
-    const actual = await TodoService.updateTextById(
-      expected._id,
-      updateData.textBody
-    );
+    const expected = await TodoService.create({ textBody: testData.textBody });
+    await TodoService.deleteById({ id: expected._id });
+    const actual = await TodoService.updateTextById({
+      id: expected._id,
+      textBody: updateData.textBody,
+    });
     expect(Object.is(actual, null)).toBe(true);
   });
 
   it("should return null when updating the completion status of a todo and no todo is found", async () => {
-    const expected = await TodoService.create(testData.textBody);
-    await TodoService.deleteById(expected._id);
-    const actual = await TodoService.updateCompleteById(expected._id);
+    const expected = await TodoService.create({ textBody: testData.textBody });
+    await TodoService.deleteById({ id: expected._id });
+    const actual = await TodoService.updateCompleteById({ id: expected._id });
     expect(Object.is(actual, null)).toBe(true);
   });
 
   it("should return null when deleting a todo and no todo is found", async () => {
-    const expected = await TodoService.create(testData.textBody);
-    await TodoService.deleteById(expected._id);
-    const actual = await TodoService.deleteById(expected._id);
+    const expected = await TodoService.create({ textBody: testData.textBody });
+    await TodoService.deleteById({ id: expected._id });
+    const actual = await TodoService.deleteById({ id: expected._id });
     expect(Object.is(actual, null)).toBe(true);
   });
 
   it("should throw an error when creating a todo with an empty string", async () => {
     try {
-      await TodoService.create("");
+      await TodoService.create({ textBody: "" });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -156,7 +166,7 @@ describe("Todo service", () => {
 
   it("should throw an error when creating a todo with a string over 255 characters long", async () => {
     try {
-      await TodoService.create(longTextBody);
+      await TodoService.create({ textBody: longTextBody });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -164,7 +174,7 @@ describe("Todo service", () => {
 
   it("should throw an error when fetching a todo with an invalid id format", async () => {
     try {
-      await TodoService.readById("1");
+      await TodoService.readById({ id: "1" });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -172,7 +182,10 @@ describe("Todo service", () => {
 
   it("should throw an error when updating the text of a todo with an invalid id format", async () => {
     try {
-      await TodoService.updateTextById("1", updateData.textBody);
+      await TodoService.updateTextById({
+        id: "1",
+        textBody: updateData.textBody,
+      });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -180,7 +193,7 @@ describe("Todo service", () => {
 
   it("should throw an error when updating the completion status of a todo with an invalid id format", async () => {
     try {
-      await TodoService.updateCompleteById("1");
+      await TodoService.updateCompleteById({ id: "1" });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -188,8 +201,10 @@ describe("Todo service", () => {
 
   it("should throw an error when updating a todo with an empty string", async () => {
     try {
-      const originalTodo = await TodoService.create(testData.textBody);
-      await TodoService.updateTextById(originalTodo._id, "");
+      const originalTodo = await TodoService.create({
+        textBody: testData.textBody,
+      });
+      await TodoService.updateTextById({ id: originalTodo._id, textBody: "" });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -197,8 +212,13 @@ describe("Todo service", () => {
 
   it("should throw an error when updating a todo with a string over 255 characters long", async () => {
     try {
-      const originalTodo = await TodoService.create(testData.textBody);
-      await TodoService.updateTextById(originalTodo._id, longTextBody);
+      const originalTodo = await TodoService.create({
+        textBody: testData.textBody,
+      });
+      await TodoService.updateTextById({
+        id: originalTodo._id,
+        textBody: longTextBody,
+      });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }
@@ -206,7 +226,7 @@ describe("Todo service", () => {
 
   it("should throw an error when deleting a todo with an invalid id format", async () => {
     try {
-      await TodoService.deleteById("1");
+      await TodoService.deleteById({ id: "1" });
     } catch (err) {
       expect(err).toHaveProperty("message");
     }

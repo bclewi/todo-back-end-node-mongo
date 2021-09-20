@@ -16,7 +16,9 @@ router
     validator.validate(postValidations),
     async (req: Request, res: Response): Promise<Response> => {
       try {
-        const { todo, todos } = await controller.createTodo(req.body.textBody);
+        const { todo, todos } = await controller.createTodo({
+          textBody: req.body.textBody,
+        });
         return res.status(201).json({
           message: "Todo created",
           todo,
@@ -46,7 +48,7 @@ router
     validator.validate(getValidations),
     async (req: Request, res: Response): Promise<Response> => {
       try {
-        const { todo } = await controller.readTodo(req.params.id);
+        const { todo } = await controller.readTodo({ id: req.params.id });
         if (!todo) {
           return res.status(404).json({
             message: "Todo not found",
@@ -64,10 +66,10 @@ router
     validator.validate(putValidations),
     async (req: Request, res: Response): Promise<Response> => {
       try {
-        const { message, todo, todos } = await controller.updateTodo(
-          req.params.id,
-          req.body.textBody
-        );
+        const { message, todo, todos } = await controller.updateTodo({
+          id: req.params.id,
+          textBody: req.body.textBody,
+        });
         if (!todo) {
           return res.status(404).json({
             message: "Todo not found",
@@ -90,7 +92,9 @@ router
     validator.validate(deleteValidations),
     async (req: Request, res: Response): Promise<Response> => {
       try {
-        const { todo, todos } = await controller.deleteTodo(req.params.id);
+        const { todo, todos } = await controller.deleteTodo({
+          id: req.params.id,
+        });
         if (!todo) {
           return res.status(404).json({
             message: "Todo not found",

@@ -1,13 +1,15 @@
 import Todo from "../models/Todo";
-import { ITodo } from "../types";
 import * as validator from "../validators/todoValidator";
+import { ITodo, CreateData, ReadData, UpdateData, DeleteData } from "../types";
 
-const create = async (textBody: string): Promise<ITodo> => {
+const create = async (data: CreateData): Promise<ITodo> => {
+  const { textBody } = data;
   validator.validateTextBody(textBody);
   return await new Todo({ textBody, isComplete: false }).save();
 };
 
-const readById = async (id: string): Promise<ITodo | null> => {
+const readById = async (data: ReadData): Promise<ITodo | null> => {
+  const { id } = data;
   validator.validateId(id);
   return await Todo.findById(id);
 };
@@ -16,7 +18,8 @@ const readAll = async (): Promise<ITodo[]> => {
   return await Todo.find();
 };
 
-const updateCompleteById = async (id: string): Promise<ITodo | null> => {
+const updateCompleteById = async (data: UpdateData): Promise<ITodo | null> => {
+  const { id } = data;
   validator.validateId(id);
   const originalTodo = await Todo.findById(id);
   if (!originalTodo) return null;
@@ -28,10 +31,8 @@ const updateCompleteById = async (id: string): Promise<ITodo | null> => {
   );
 };
 
-const updateTextById = async (
-  id: string,
-  textBody: string
-): Promise<ITodo | null> => {
+const updateTextById = async (data: UpdateData): Promise<ITodo | null> => {
+  const { id, textBody } = data;
   validator.validateId(id);
   validator.validateTextBody(textBody);
   return await Todo.findByIdAndUpdate(
@@ -42,7 +43,8 @@ const updateTextById = async (
   );
 };
 
-const deleteById = async (id: string): Promise<ITodo | null> => {
+const deleteById = async (data: DeleteData): Promise<ITodo | null> => {
+  const { id } = data;
   validator.validateId(id);
   return await Todo.findByIdAndDelete(id);
 };

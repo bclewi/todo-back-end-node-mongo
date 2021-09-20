@@ -1,6 +1,10 @@
 import * as todoService from "../services/todoService";
 import {
   ITodo,
+  CreateProps,
+  ReadProps,
+  UpdateProps,
+  DeleteProps,
   CreateResponse,
   ReadResponse,
   ReadAllResponse,
@@ -8,8 +12,8 @@ import {
   DeleteResponse,
 } from "../types";
 
-const createTodo = async (textBody: string): Promise<CreateResponse> => {
-  const todo = await todoService.create(textBody);
+const createTodo = async (props: CreateProps): Promise<CreateResponse> => {
+  const todo = await todoService.create({ textBody: props.textBody });
   const todos = await todoService.readAll();
   return {
     todo,
@@ -17,8 +21,8 @@ const createTodo = async (textBody: string): Promise<CreateResponse> => {
   };
 };
 
-const readTodo = async (id: string): Promise<ReadResponse> => {
-  const todo = await todoService.readById(id);
+const readTodo = async (props: ReadProps): Promise<ReadResponse> => {
+  const todo = await todoService.readById({ id: props.id });
   return { todo };
 };
 
@@ -27,18 +31,16 @@ const readTodos = async (): Promise<ReadAllResponse> => {
   return { todos };
 };
 
-const updateTodo = async (
-  id: string,
-  textBody: string | null
-): Promise<UpdateResponse> => {
+const updateTodo = async (props: UpdateProps): Promise<UpdateResponse> => {
+  const { id, textBody } = props;
   let todo: ITodo = null;
   let message: string = "";
 
   if (!textBody) {
-    todo = await todoService.updateCompleteById(id);
+    todo = await todoService.updateCompleteById({ id });
     message = "Todo completion status updated";
   } else {
-    todo = await todoService.updateTextById(id, textBody);
+    todo = await todoService.updateTextById({ id, textBody });
     message = "Todo text updated";
   }
   const todos = await todoService.readAll();
@@ -46,8 +48,8 @@ const updateTodo = async (
   return { message, todo, todos };
 };
 
-const deleteTodo = async (id: string): Promise<DeleteResponse> => {
-  const todo = await todoService.deleteById(id);
+const deleteTodo = async (props: DeleteProps): Promise<DeleteResponse> => {
+  const todo = await todoService.deleteById({ id: props.id });
   const todos = await todoService.readAll();
   return {
     todo,
