@@ -7,13 +7,13 @@ const create = async (textBody: string): Promise<ITodo> => {
   return await new Todo({ textBody, isComplete: false }).save();
 };
 
+const readAll = async (): Promise<ITodo[]> => {
+  return await Todo.find();
+};
+
 const readById = async (id: string): Promise<ITodo | null> => {
   validator.validateId(id);
   return await Todo.findById(id);
-};
-
-const readAll = async (): Promise<ITodo[]> => {
-  return await Todo.find();
 };
 
 const updateCompleteById = async (id: string): Promise<ITodo | null> => {
