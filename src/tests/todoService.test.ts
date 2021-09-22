@@ -1,14 +1,21 @@
 import { mocked } from "ts-jest/utils";
 
-// Mock Todo model class constructor and ITodo object instance
+// Mock Todo model class constructor and ITodo object instance function calls
 // https://jestjs.io/docs/es6-class-mocks#in-depth-understanding-mock-constructor-functions
 // https://stackoverflow.com/questions/58273544/how-to-properly-use-axios-get-mockresolvedvalue-for-async-calls-in-jest
 // https://stackoverflow.com/questions/61374288/typescript-jest-mock-xx-default-is-not-a-constructor-unable-to-instanciate-m
-
 const mockSave = jest.fn();
+const mockFind = jest.fn();
+const mockFindById = jest.fn();
+const mockFindByIdAndUpdate = jest.fn();
+const mockFindByIdAndDelete = jest.fn();
 const TodoMocked = jest.fn().mockImplementation(() => {
   return {
     save: mockSave,
+    find: mockFind,
+    findById: mockFindById,
+    findByIdAndUpdate: mockFindByIdAndUpdate,
+    findByIdAndDelete: mockFindByIdAndDelete,
   };
 });
 jest.mock("../models/Todo", () => {
@@ -28,7 +35,25 @@ const validatorMocked = mocked(validator, true);
 import * as todoService from "../services/todoService";
 import { ITodo } from "../types";
 
+const createSpy = jest.spyOn(todoService, "create");
+const readAllSpy = jest.spyOn(todoService, "readAll");
+const readSpy = jest.spyOn(todoService, "readById");
+const updateCompleteSpy = jest.spyOn(todoService, "updateCompleteById");
+const updateTextSpy = jest.spyOn(todoService, "updateTextById");
+const deleteSpy = jest.spyOn(todoService, "deleteById");
+
 describe("todoService", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    TodoMocked.mockClear();
+    createSpy.mockClear();
+    readAllSpy.mockClear();
+    readSpy.mockClear();
+    updateCompleteSpy.mockClear();
+    updateTextSpy.mockClear();
+    deleteSpy.mockClear();
+  });
+
   const testData = {
     textBody: "test",
   };
@@ -40,93 +65,102 @@ describe("todoService", () => {
   const longTextBody =
     "11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111 11111111111111111111111111111111111111111111111111";
 
-  describe.only(".create(textBody: string)", () => {
-    beforeEach(() => {
-      TodoMocked.mockClear();
-      mockSave.mockClear();
-    });
-
+  describe(".create(textBody: string)", () => {
     describe("success", () => {
-      it("should create a todo", async () => {
-        const createSpy = jest.spyOn(todoService, "create");
-        const todoValue = {
-          _id: "1",
-          textBody: testData.textBody,
-          isComplete: false,
-          createdAt: "now",
-          updatedAt: "now",
-        };
-        mockSave.mockResolvedValue(todoValue);
+      describe("when given a valid textBody", () => {
+        it("should call create with textBody", async () => {
+          const todoValue = {
+            _id: "1",
+            textBody: testData.textBody,
+            isComplete: false,
+            createdAt: "now",
+            updatedAt: "now",
+          };
+          mockSave.mockResolvedValue(todoValue);
 
-        const todo = await todoService.create(testData.textBody);
+          const result = await todoService.create(testData.textBody);
 
-        expect(createSpy).toHaveBeenCalledWith(testData.textBody);
-        expect(createSpy).toHaveBeenCalledTimes(1);
-        expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
-          testData.textBody
-        );
-        expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
-        expect(TodoMocked).toHaveBeenCalledWith({
-          textBody: testData.textBody,
-          isComplete: false,
+          expect(createSpy).toHaveBeenCalledTimes(1);
+          expect(createSpy).toHaveBeenCalledWith(testData.textBody);
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
+            testData.textBody
+          );
+          expect(TodoMocked).toHaveBeenCalledTimes(1);
+          expect(TodoMocked).toHaveBeenCalledWith({
+            textBody: testData.textBody,
+            isComplete: false,
+          });
+          expect(mockSave).toHaveBeenCalledTimes(1);
+          expect(result).toBe(todoValue);
         });
-        expect(TodoMocked).toHaveBeenCalledTimes(1);
-        expect(mockSave).toHaveBeenCalledTimes(1);
-        expect(todo).toBeDefined();
-        expect(Object.is(todo, null)).toBe(false);
-        expect(todo).toHaveProperty("_id");
-        expect(todo).toHaveProperty("textBody", testData.textBody);
-        expect(todo).toHaveProperty("isComplete", false);
-        expect(todo).toHaveProperty("createdAt");
-        expect(todo).toHaveProperty("updatedAt");
       });
     });
+
     describe("failure", () => {
-      it("should throw an error when creating a todo with an empty string", async () => {
-        try {
-          await todoService.create("");
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when given an empty string", () => {
+        it("should throw an error", async () => {
+          try {
+            await todoService.create("");
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(createSpy).toHaveBeenCalledTimes(1);
+            expect(createSpy).toHaveBeenCalledWith("");
+            expect(err).toHaveProperty("message");
+          }
+        });
       });
 
-      it("should throw an error when creating a todo with a string over 255 characters long", async () => {
-        try {
-          await todoService.create(longTextBody);
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when given a string with over 255 characters", () => {
+        it("should throw an error", async () => {
+          try {
+            await todoService.create(longTextBody);
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(createSpy).toHaveBeenCalledTimes(1);
+            expect(createSpy).toHaveBeenCalledWith(longTextBody);
+            expect(err).toHaveProperty("message");
+          }
+        });
       });
     });
   });
 
   describe(".readAll()", () => {
     describe("success", () => {
-      it("should fetch all todos", async () => {
-        const TODOS_COUNT = 3;
-        const testData = [
-          { textBody: "testA" },
-          { textBody: "testB" },
-          { textBody: "testC" },
-        ];
+      describe("when todos exist", () => {
+        it("should fetch all todos", async () => {
+          const TODOS_COUNT = 3;
+          let todoValues = [];
+          for (let i = 0; i < TODOS_COUNT; i++) {
+            todoValues[i] = {
+              _id: i.toString(),
+              textBody: `test ${i.toString()}`,
+              isComplete: false,
+              createdAt: "now",
+              updateAt: "now",
+            };
+          }
+          mockFind.mockResolvedValue(todoValues);
 
-        let expected = [];
-        for (let i = 0; i < TODOS_COUNT; i++) {
-          expected[i] = await todoService.create(testData[i].textBody);
-        }
+          await todoService.readAll();
 
-        const actual = await todoService.readAll();
-        expect(actual).toHaveLength(TODOS_COUNT);
-        for (let i = 0; i < TODOS_COUNT; i++) {
-          expect(actual[i].toJSON).toEqual(expected[i].toJSON);
-        }
+          expect(readAllSpy).toBeCalledTimes(1);
+          expect(mockFind).toBeCalledTimes(1);
+          expect(mockFind).toReturnWith(todoValues);
+        });
       });
 
-      it("should fetch all todos as an empty array if no todos are found", async () => {
-        const allTodos = await todoService.readAll();
-        expect(Object.is(allTodos, null)).toBe(false);
-        expect(allTodos).toHaveLength(0);
-        expect(allTodos).toStrictEqual([]);
+      describe("when no todos exist", () => {
+        it("should fetch an empty array", async () => {
+          mockFind.mockResolvedValue([]);
+
+          await todoService.readAll();
+
+          expect(readAllSpy).toBeCalledTimes(1);
+          expect(mockFind).toBeCalledTimes(1);
+          expect(mockFind).toReturnWith([]);
+        });
       });
     });
     describe("failure", () => {});
