@@ -1,6 +1,6 @@
 import Todo from "../models/Todo";
-import { ITodo } from "../types";
 import * as validator from "../validators/todoValidator";
+import { ITodo } from "../types";
 
 const create = async (textBody: string): Promise<ITodo> => {
   validator.validateTextBody(textBody);

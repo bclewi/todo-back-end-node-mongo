@@ -3,7 +3,7 @@ import * as db from "./testDb";
 import * as request from "supertest";
 import { ITodo } from "../types";
 
-describe.skip("Todo List REST API", () => {
+describe("Todo List REST API", () => {
   beforeAll(async () => {
     await db.connect();
   });

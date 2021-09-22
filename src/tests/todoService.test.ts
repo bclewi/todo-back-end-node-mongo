@@ -1,4 +1,5 @@
 import { mocked } from "ts-jest/utils";
+import { v4 as uuidv4 } from "uuid";
 
 // Mock Todo model class constructor and ITodo object instance function calls
 // https://jestjs.io/docs/es6-class-mocks#in-depth-understanding-mock-constructor-functions
@@ -34,6 +35,7 @@ const validatorMocked = mocked(validator, true);
 
 import * as todoService from "../services/todoService";
 import { ITodo } from "../types";
+import { notify } from "superagent";
 
 const createSpy = jest.spyOn(todoService, "create");
 const readAllSpy = jest.spyOn(todoService, "readAll");
@@ -43,7 +45,8 @@ const updateTextSpy = jest.spyOn(todoService, "updateTextById");
 const deleteSpy = jest.spyOn(todoService, "deleteById");
 
 describe("todoService", () => {
-  beforeEach(() => {
+  beforeEach(() => {});
+  afterEach(() => {
     jest.clearAllMocks();
     TodoMocked.mockClear();
     createSpy.mockClear();
@@ -53,7 +56,6 @@ describe("todoService", () => {
     updateTextSpy.mockClear();
     deleteSpy.mockClear();
   });
-
   const testData = {
     textBody: "test",
   };
@@ -168,167 +170,372 @@ describe("todoService", () => {
 
   describe(".readById(id: string)", () => {
     describe("success", () => {
-      it("should fetch a todo", async () => {
-        const expected = await todoService.create(testData.textBody);
-        const actual = await todoService.readById(expected._id);
-        expectToHaveSameProperties(actual, expected);
+      describe("when a valid id is given", () => {
+        it("should return a todo", async () => {
+          const todoValue = {
+            _id: uuidv4(),
+            textBody: testData.textBody,
+            isComplete: false,
+            createdAt: "now",
+            updatedAt: "now",
+          };
+          mockFindById.mockResolvedValue(todoValue);
+
+          const result = await todoService.readById(todoValue._id);
+
+          expect(readSpy).toHaveBeenCalledTimes(1);
+          expect(readSpy).toHaveBeenCalledWith(todoValue._id);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(
+            todoValue._id
+          );
+          expect(mockFindById).toHaveBeenCalledTimes(1);
+          expect(mockFindById).toHaveBeenCalledWith(todoValue._id);
+          expect(result).toBe(todoValue);
+        });
       });
     });
     describe("failure", () => {
-      it("should return null when fetching a todo and no todo is found", async () => {
-        const expected = await todoService.create(testData.textBody);
-        await todoService.deleteById(expected._id);
-        const actual = await todoService.readById(expected._id);
-        expect(Object.is(actual, null)).toBe(true);
+      describe("when fetching a todo and no todo is found", () => {
+        it("should return null", async () => {
+          mockFindById.mockResolvedValue(null);
+          const id = uuidv4();
+
+          const result = await todoService.readById(id);
+
+          expect(readSpy).toHaveBeenCalledTimes(1);
+          expect(readSpy).toHaveBeenCalledWith(id);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(id);
+          expect(mockFindById).toHaveBeenCalledTimes(1);
+          expect(mockFindById).toHaveBeenCalledWith(id);
+          expect(Object.is(result, null)).toBe(true);
+        });
       });
 
-      it("should throw an error when fetching a todo with an invalid id format", async () => {
-        try {
-          await todoService.readById("1");
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when fetching a todo with an invalid id format", () => {
+        it("should throw an error ", async () => {
+          const invalidId = "1";
+          try {
+            await todoService.readById(invalidId);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(readSpy).toHaveBeenCalledTimes(1);
+            expect(readSpy).toHaveBeenCalledWith(invalidId);
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).toHaveBeenCalledWith(invalidId);
+            expect(mockFindById).not.toHaveBeenCalled();
+            expect(mockFindById).not.toHaveReturned();
+          }
+        });
       });
     });
   });
 
   describe(".updateCompleteById(id: string)", () => {
     describe("success", () => {
-      it("should update the completion status of a todo", async () => {
-        const originalTodo = await todoService.create(testData.textBody);
-        const updatedTodo = await todoService.updateCompleteById(
-          originalTodo._id
-        );
-        expect(Object.is(updatedTodo, null)).toBe(false);
-        expect(updatedTodo).toHaveProperty("_id", originalTodo._id);
-        expect(updatedTodo).toHaveProperty("textBody", originalTodo.textBody);
-        expect(updatedTodo).toHaveProperty(
-          "isComplete",
-          !originalTodo.isComplete
-        );
-        expect(updatedTodo).toHaveProperty("createdAt", originalTodo.createdAt);
-        expect(updatedTodo).toHaveProperty("updatedAt");
-        expect(updatedTodo.updatedAt).not.toBe(originalTodo.updatedAt);
+      describe("when given a valid id", () => {
+        it("should update the completion status", async () => {
+          const originalTodo = {
+            _id: uuidv4(),
+            textBody: testData.textBody,
+            isComplete: false,
+            createdAt: "earlier",
+            updatedAt: "earlier",
+          };
+          const updatedTodo = {
+            _id: originalTodo._id,
+            textBody: testData.textBody,
+            isComplete: true,
+            createdAt: "earlier",
+            updatedAt: "now",
+          };
+          mockFindById.mockResolvedValue(originalTodo);
+          mockFindByIdAndUpdate.mockResolvedValue(updatedTodo);
 
-        const todos = await todoService.readAll();
-        expect(todos).toHaveLength(1);
+          const result = await todoService.updateCompleteById(updatedTodo._id);
+
+          expect(updateCompleteSpy).toHaveBeenCalledTimes(1);
+          expect(updateCompleteSpy).toHaveBeenCalledWith(updatedTodo._id);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(
+            updatedTodo._id
+          );
+          expect(mockFindById).toHaveBeenCalledTimes(1);
+          expect(mockFindById).toHaveBeenCalledWith(updatedTodo._id);
+          expect(mockFindById).toHaveReturnedWith(originalTodo);
+          expect(!originalTodo).toBe(false);
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledTimes(1);
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
+            updatedTodo._id,
+            { isComplete: !originalTodo.isComplete },
+            { returnOriginal: false, upsert: false }
+          );
+          expect(result).toBe(updatedTodo);
+        });
       });
     });
     describe("failure", () => {
-      it("should return null when updating the completion status of a todo and no todo is found", async () => {
-        const expected = await todoService.create(testData.textBody);
-        await todoService.deleteById(expected._id);
-        const actual = await todoService.updateCompleteById(expected._id);
-        expect(Object.is(actual, null)).toBe(true);
+      describe("when updating the completion status of a todo and no todo is found", () => {
+        it("should return null ", async () => {
+          const newId = uuidv4();
+          mockFindById.mockResolvedValue(null);
+
+          const result = await todoService.updateCompleteById(newId);
+
+          expect(updateCompleteSpy).toHaveBeenCalledTimes(1);
+          expect(updateCompleteSpy).toHaveBeenCalledWith(newId);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(newId);
+          expect(mockFindById).toHaveBeenCalledTimes(1);
+          expect(mockFindById).toHaveBeenCalledWith(newId);
+          expect(mockFindById).toHaveReturnedWith(null);
+          expect(updateCompleteSpy).toHaveReturnedWith(null);
+          expect(mockFindByIdAndUpdate).not.toHaveBeenCalled();
+        });
       });
 
-      it("should throw an error when updating the completion status of a todo with an invalid id format", async () => {
-        try {
-          await todoService.updateCompleteById("1");
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when updating the completion status of a todo with an invalid id format", () => {
+        it("should throw an error", async () => {
+          const invalidId = "1";
+          try {
+            await todoService.updateCompleteById(invalidId);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(updateCompleteSpy).toHaveBeenCalledTimes(1);
+            expect(updateCompleteSpy).toHaveBeenCalledWith(invalidId);
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).toHaveBeenCalledWith(invalidId);
+            expect(mockFindById).not.toHaveBeenCalled();
+            expect(mockFindByIdAndUpdate).not.toHaveBeenCalled();
+            expect(updateCompleteSpy).not.toHaveReturned();
+          }
+        });
       });
     });
   });
 
   describe(".updateTextById(id: string, textBody: string)", () => {
     describe("success", () => {
-      it("should update the text of a todo", async () => {
-        const originalTodo = await todoService.create(testData.textBody);
-        const updatedTodo = await todoService.updateTextById(
-          originalTodo._id,
-          updateData.textBody
-        );
-        expect(Object.is(updatedTodo, null)).toBe(false);
-        expect(updatedTodo).toHaveProperty("_id", originalTodo._id);
-        expect(updatedTodo).toHaveProperty("textBody", updateData.textBody);
-        expect(updatedTodo).toHaveProperty(
-          "isComplete",
-          originalTodo.isComplete
-        );
-        expect(updatedTodo).toHaveProperty("createdAt", originalTodo.createdAt);
-        expect(updatedTodo).toHaveProperty("updatedAt");
-        expect(updatedTodo.updatedAt).not.toBe(originalTodo.updatedAt);
+      describe("when given a valid id and text", () => {
+        it("should update the text of a todo", async () => {
+          const updatedTodo = {
+            _id: uuidv4(),
+            textBody: updateData.textBody,
+            isComplete: false,
+            createdAt: "earlier",
+            updatedAt: "now",
+          };
+          mockFindByIdAndUpdate.mockResolvedValue(updatedTodo);
 
-        const todos = await todoService.readAll();
-        expect(todos).toHaveLength(1);
+          const result = await todoService.updateTextById(
+            updatedTodo._id,
+            updateData.textBody
+          );
+
+          expect(updateTextSpy).toHaveBeenCalledTimes(1);
+          expect(updateTextSpy).toHaveBeenCalledWith(
+            updatedTodo._id,
+            updateData.textBody
+          );
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(
+            updatedTodo._id
+          );
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
+            updatedTodo.textBody
+          );
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledTimes(1);
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
+            updatedTodo._id,
+            { textBody: updatedTodo.textBody },
+            { returnOriginal: false, upsert: false }
+          );
+          expect(mockFindByIdAndUpdate).toHaveReturnedWith(updatedTodo);
+          expect(result).toBe(updatedTodo);
+        });
       });
     });
     describe("failure", () => {
-      it("should return null when updating the text of a todo and no todo is found", async () => {
-        const expected = await todoService.create(testData.textBody);
-        await todoService.deleteById(expected._id);
-        const actual = await todoService.updateTextById(
-          expected._id,
-          updateData.textBody
-        );
-        expect(Object.is(actual, null)).toBe(true);
+      describe("when updating the text of a todo and no todo is found", () => {
+        it("should return null", async () => {
+          const newId = uuidv4();
+          mockFindByIdAndUpdate.mockResolvedValue(null);
+
+          const result = await todoService.updateTextById(
+            newId,
+            updateData.textBody
+          );
+
+          expect(updateTextSpy).toHaveBeenCalledTimes(1);
+          expect(updateTextSpy).toHaveBeenCalledWith(
+            newId,
+            updateData.textBody
+          );
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(newId);
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
+            updateData.textBody
+          );
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledTimes(1);
+          expect(mockFindByIdAndUpdate).toHaveBeenCalledWith(
+            newId,
+            { textBody: updateData.textBody },
+            { returnOriginal: false, upsert: false }
+          );
+          expect(mockFindByIdAndUpdate).toHaveReturnedWith(null);
+          expect(result).toBe(null);
+        });
       });
 
-      it("should throw an error when updating the text of a todo with an invalid id format", async () => {
-        try {
-          await todoService.updateTextById("1", updateData.textBody);
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when updating the text of a todo with an invalid id format", () => {
+        it("should throw an error", async () => {
+          const invalidId = "1";
+          try {
+            await todoService.updateTextById(invalidId, updateData.textBody);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(updateTextSpy).toHaveBeenCalledTimes(1);
+            expect(updateTextSpy).toHaveBeenCalledWith(
+              invalidId,
+              updateData.textBody
+            );
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).not.toHaveReturned();
+            expect(validatorMocked.validateTextBody).not.toHaveBeenCalled();
+            expect(mockFindByIdAndUpdate).not.toHaveBeenCalled();
+            expect(updateTextSpy).not.toHaveReturned();
+          }
+        });
       });
 
-      it("should throw an error when updating a todo with an empty string", async () => {
-        try {
-          const originalTodo = await todoService.create(testData.textBody);
-          await todoService.updateTextById(originalTodo._id, "");
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when updating a todo with an empty string", () => {
+        it("should throw an error", async () => {
+          const id = uuidv4();
+          const invalidTextBody = "";
+          try {
+            await todoService.updateTextById(id, invalidTextBody);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(updateTextSpy).toHaveBeenCalledTimes(1);
+            expect(updateTextSpy).toHaveBeenCalledWith(id, invalidTextBody);
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).toHaveBeenCalledWith(id);
+            expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
+              invalidTextBody
+            );
+            expect(validatorMocked.validateTextBody).not.toHaveReturned();
+            expect(mockFindByIdAndUpdate).not.toHaveBeenCalled();
+            expect(updateTextSpy).not.toHaveReturned();
+          }
+        });
       });
 
-      it("should throw an error when updating a todo with a string over 255 characters long", async () => {
-        try {
-          const originalTodo = await todoService.create(testData.textBody);
-          await todoService.updateTextById(originalTodo._id, longTextBody);
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when updating a todo with a string over 255 characters long", () => {
+        it("should throw an error", async () => {
+          const id = uuidv4();
+          try {
+            await todoService.updateTextById(id, longTextBody);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(updateTextSpy).toHaveBeenCalledTimes(1);
+            expect(updateTextSpy).toHaveBeenCalledWith(id, longTextBody);
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).toHaveBeenCalledWith(id);
+            expect(validatorMocked.validateTextBody).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateTextBody).toHaveBeenCalledWith(
+              longTextBody
+            );
+            expect(validatorMocked.validateTextBody).not.toHaveReturned();
+            expect(mockFindByIdAndUpdate).not.toHaveBeenCalled();
+            expect(updateTextSpy).not.toHaveReturned();
+          }
+        });
       });
     });
   });
 
   describe(".deleteById(id: string)", () => {
     describe("success", () => {
-      it("should delete a todo", async () => {
-        const originalTodo = await todoService.create(testData.textBody);
-        const deletedTodo = await todoService.deleteById(originalTodo._id);
-        expect(Object.is(deletedTodo, null)).toBe(false);
-        expectToHaveSameProperties(deletedTodo, originalTodo);
+      describe("when given a valid id", () => {
+        it("should delete a todo", async () => {
+          const todoValue = {
+            _id: uuidv4(),
+            textBody: testData.textBody,
+            isComplete: false,
+            createdAt: "before",
+            updatedAt: "before",
+          };
+          mockFindByIdAndDelete.mockResolvedValue(todoValue);
 
-        const allTodos = await todoService.readAll();
-        expect(allTodos).toHaveLength(0);
+          const deletedTodo = await todoService.deleteById(todoValue._id);
+
+          expect(deleteSpy).toHaveBeenCalledTimes(1);
+          expect(deleteSpy).toHaveBeenCalledWith(todoValue._id);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(
+            todoValue._id
+          );
+          expect(mockFindByIdAndDelete).toHaveBeenCalledTimes(1);
+          expect(mockFindByIdAndDelete).toHaveBeenCalledWith(todoValue._id);
+          expect(mockFindByIdAndDelete).toHaveReturnedWith(todoValue);
+          expect(deleteSpy).toHaveReturnedWith(todoValue);
+          expect(deletedTodo).toBe(todoValue);
+        });
       });
     });
     describe("failure", () => {
-      it("should return null when deleting a todo and no todo is found", async () => {
-        const expected = await todoService.create(testData.textBody);
-        await todoService.deleteById(expected._id);
-        const actual = await todoService.deleteById(expected._id);
-        expect(Object.is(actual, null)).toBe(true);
+      describe("when deleting a todo and no todo is found", () => {
+        it("should return null", async () => {
+          const id = uuidv4();
+          mockFindByIdAndDelete.mockResolvedValue(null);
+
+          const result = await todoService.deleteById(id);
+
+          expect(deleteSpy).toHaveBeenCalledTimes(1);
+          expect(deleteSpy).toHaveBeenCalledWith(id);
+          expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+          expect(validatorMocked.validateId).toHaveBeenCalledWith(id);
+          expect(mockFindByIdAndDelete).toHaveBeenCalledTimes(1);
+          expect(mockFindByIdAndDelete).toHaveBeenCalledWith(id);
+          expect(mockFindByIdAndDelete).toHaveReturnedWith(null);
+          expect(deleteSpy).toHaveReturnedWith(null);
+          expect(result).toBe(null);
+        });
       });
 
-      it("should throw an error when deleting a todo with an invalid id format", async () => {
-        try {
-          await todoService.deleteById("1");
-        } catch (err) {
-          expect(err).toHaveProperty("message");
-        }
+      describe("when deleting a todo with an invalid id format", () => {
+        it("should throw an error", async () => {
+          const invalidId = "1";
+          try {
+            await todoService.deleteById(invalidId);
+
+            expect("this line").toBe("never executed");
+          } catch (err) {
+            expect(err).toHaveProperty("message");
+            expect(deleteSpy).toHaveBeenCalledTimes(1);
+            expect(deleteSpy).toHaveBeenCalledWith(invalidId);
+            expect(validatorMocked.validateId).toHaveBeenCalledTimes(1);
+            expect(validatorMocked.validateId).toHaveBeenCalledWith(invalidId);
+            expect(validatorMocked.validateId).not.toHaveReturned();
+            expect(mockFindByIdAndDelete).not.toHaveBeenCalled();
+            expect(deleteSpy).not.toHaveReturned();
+          }
+        });
       });
     });
   });
 });
-
-const expectToHaveSameProperties = (actual: ITodo, expected: ITodo) => {
-  expect(actual).toHaveProperty("_id", expected._id);
-  expect(actual).toHaveProperty("textBody", expected.textBody);
-  expect(actual).toHaveProperty("isComplete", expected.isComplete);
-  expect(actual).toHaveProperty("createdAt", expected.createdAt);
-  expect(actual).toHaveProperty("updatedAt", expected.updatedAt);
-};
